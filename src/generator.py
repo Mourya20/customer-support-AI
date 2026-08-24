@@ -12,10 +12,11 @@ load_dotenv()
 
 
 class GroundedGenerator:
-    def __init__(self) -> None:
+    def __init__(self, enable_llm: bool = True) -> None:
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.client = OpenAI(api_key=self.api_key) if self.api_key else None
+        self.enable_llm = enable_llm
+        self.client = OpenAI(api_key=self.api_key) if (self.api_key and enable_llm) else None
 
     def _build_context(self, chunks: List[RetrievedChunk]) -> str:
         context_parts = []
@@ -29,11 +30,11 @@ class GroundedGenerator:
         context = self._build_context(chunks)
 
         if not self.client:
-            top_source = chunks[0].title if chunks else "Knowledge Base"
+            top_source = chunks[0].title if chunks else "knowledge base"
             return (
                 f"This appears to be a {category.replace('_', ' ')} request. "
-                f"Based on {top_source}, here is the next step: review the recommended troubleshooting "
-                "or policy actions and apply them to the customer case."
+                f"Based on '{top_source}', follow the documented troubleshooting or policy steps "
+                "and confirm the result with the customer."
             )
 
         system_prompt = (
